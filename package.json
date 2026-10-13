@@ -1,0 +1,17 @@
+{
+  "name": "igmg-mescid-app",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["packages/*", "apps/*"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "npm run dev -w @mescid/web",
+    "build": "npm run build -w @mescid/web",
+    "start": "npm run start -w @mescid/web",
+    "db:migrate": "npm run db:migrate -w @mescid/web",
+    "db:seed": "npm run db:seed -w @mescid/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e -w @mescid/web"
+  }
+}
