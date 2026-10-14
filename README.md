@@ -12,7 +12,8 @@ en publiceert (handmatig, of als concept geïmporteerd uit Diyanet).
   met aftelling, 7-dagenoverzicht, andere datums bekijken, "mijn moskee" zonder account.
 - Beheer: inloggen, moskeeën aanmaken en bewerken, roosterconcept invoeren, automatische controle, publiceren, auditlog.
 - Rechten per organisatie, regio en moskee (organisatiebeheerder, regiobeheerder, moskeebeheerder, redacteur, publiceerder).
-- Diyanet-import als concept (vereist een eigen Diyanet-account, zie `docs/research/diyanet.md`).
+- Diyanet-maandtabel plakken (of CSV) → concept met controle, verschil met huidig rooster en iqama-minuten.
+- Wachtwoord wijzigen in het beheer.
 - Openbare API: `GET /api/v1/mosques`, `/api/v1/mosques/{id}`, `/api/v1/mosques/{id}/prayer-days`.
 
 Zie `docs/PLAN.md` voor wat nog komt en `docs/verification/fase-1.md` voor de testresultaten.
@@ -42,7 +43,14 @@ npm test                 # rekenmodule + integratietests (database mescid_test v
 npm run test:e2e         # browsertests tegen een echte build (database mescid_e2e vereist)
 ```
 
+## Pilot IGMG Hilversum
+
+Zie `docs/pilot-hilversum.md` voor het stappenplan.
+
 ## Diyanet-tijden importeren
+
+Gewone werkwijze (geen account nodig): kopieer de maandtabel van namazvakitleri.diyanet.gov.tr en plak die in het beheer bij
+**Rooster importeren**. Alleen als er later een Diyanet API-account komt:
 
 ```sh
 # met eigen Diyanet-account in apps/web/.env.local (DIYANET_EMAIL / DIYANET_PASSWORD)

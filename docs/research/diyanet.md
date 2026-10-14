@@ -1,6 +1,6 @@
 # Diyanet als bron voor gebedstijden
 
-**Datum:** 13 oktober 2026 · **Besluit eigenaar:** gebruik Diyanet-tijden (zie gesprek met opdrachtgever).
+**Datum:** 13–14 oktober 2026 · **Besluit eigenaar:** Diyanet is leidend. Er komt **geen** Diyanet API-account.
 
 ## Wat ik heb gevonden
 
@@ -21,6 +21,20 @@ in Nederland nu de Hicret-tijden gebruiken, kan het tonen van Diyanet-tijden ver
 (soms tientallen minuten bij Fajr en Isha). **Laat de inhoudelijk verantwoordelijke bij IGMG bevestigen welke bron leidend is.**
 De app ondersteunt beide: de bron wordt per rooster vastgelegd en aan bezoekers getoond.
 
+## Gekozen werkwijze (zonder account)
+
+Omdat er geen API-account komt, kopieert een beheerder de **maandtabel** van namazvakitleri.diyanet.gov.tr en plakt die in
+het beheer ("Rooster importeren"). De app leest per regel de datum en de zes tijden (İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı),
+maakt er een concept van, toont fouten en verschillen, en een mens publiceert. Iqama kan als "aantal minuten na de gebedstijd"
+worden meegegeven. Er wordt **niet** automatisch van de Diyanet-website gelezen (geen scraping).
+
+Let op: ik kon de Diyanet-website niet zelf openen, dus de exacte vorm van de gekopieerde tabel is AFGELEID. De lezer is ruim
+(tab, puntkomma, spaties; datums als `14.10.2026`, `2026-10-14` of `14 Ekim 2026`), maar weigert alles wat dubbelzinnig is.
+Bij de eerste echte import: controleer de tijden van een paar dagen met de Diyanet-pagina.
+
+Of Hilversum als aparte plaats in de Diyanet-lijst voor Nederland staat, heb ik niet kunnen controleren. Staat het er niet in,
+dan moet IGMG kiezen welke nabije plaats (bijv. Amsterdam of Utrecht) leidend is.
+
 ## Hoe de app ermee omgaat
 
 1. Diyanet wordt **nooit** live aangeroepen bij een bezoek. Een beheerder (of later een geplande taak) importeert tijden.
@@ -29,7 +43,7 @@ De app ondersteunt beide: de bron wordt per rooster vastgelegd en aan bezoekers 
 4. Een Isha die vóór Maghrib lijkt te vallen wordt **niet** automatisch naar "na middernacht" verschoven; de controle markeert dat.
 5. Zonder `DIYANET_EMAIL`/`DIYANET_PASSWORD` staat de koppeling uit; handmatige invoer werkt altijd.
 
-## Wat nodig is om live te gaan
+## Alleen nodig als later tóch een API-account komt
 
 - Een Diyanet-account voor IGMG aanvragen en de voorwaarden lezen (mag hergebruik in een eigen app? limieten?).
 - Per pilotmoskee de juiste Diyanet-plaats-ID opzoeken (via `/api/Place/...`).

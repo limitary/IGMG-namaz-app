@@ -83,3 +83,12 @@ export function localToInstant(date: LocalDate, time: LocalTime, dayOffset: DayO
   const sameWallClock = Temporal.PlainDateTime.compare(earlier.toPlainDateTime(), pdt) === 0;
   return { ok: false, reason: sameWallClock ? 'ambiguous' : 'nonexistent' };
 }
+
+/** Telt minuten op bij een lokale tijd. Over middernacht heen geeft dayOffset 1. */
+export function addMinutes(time: LocalTime, minutes: number): { time: LocalTime; dayOffset: DayOffset } {
+  const t = TIME_RE.exec(time);
+  if (!t || !Number.isInteger(minutes) || minutes < 0 || minutes > 600) throw new RangeError('Ongeldige tijd of minuten');
+  const total = Number(t[1]) * 60 + Number(t[2]) + minutes;
+  const m = total % 1440;
+  return { time: `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`, dayOffset: total >= 1440 ? 1 : 0 };
+}

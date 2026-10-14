@@ -108,4 +108,52 @@ test.describe('beheer', () => {
     await page.getByTestId('versions').getByRole('link').first().click();
     await expect(page.getByRole('heading', { name: 'Publiceren' })).toHaveCount(0);
   });
+
+  test('Diyanet-tabel plakken met iqama-minuten, verschil zien, publiceren', async ({ page }) => {
+    const iso = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+    const tr = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}`;
+    const d1 = iso(70);
+    const d2 = iso(71);
+    await loginAs(page, 'beheer-a@demo.invalid');
+    await page.getByRole('link', { name: 'Demo-moskee Zuid' }).click();
+    const form = page.getByTestId('import-form');
+
+    // Eerst een tabel met een fout: niets wordt aangemaakt.
+    await form.getByLabel('Tabel').fill(`${tr(d1)}\t06:12\t07:58\t13:27\t16:01\t18:45`);
+    await form.getByRole('button', { name: 'Controleren en concept maken' }).click();
+    await expect(page.getByTestId('import-errors')).toContainText('Niets geïmporteerd');
+    await expect(page.getByTestId('import-errors')).toContainText('Regel 1');
+
+    // Daarna een goede tabel (fictieve tijden), met iqama 15 min na Dhuhr.
+    const table = `Miladi Tarih\tHicri Tarih\tİmsak\tGüneş\tÖğle\tİkindi\tAkşam\tYatsı\n${tr(d1)} Çarşamba\t1 Receb 1448\t06:12\t07:58\t13:27\t16:01\t18:45\t20:21\n${tr(d2)} Perşembe\t2 Receb 1448\t06:13\t07:59\t13:27\t16:00\t18:44\t20:20`;
+    await form.getByLabel('Tabel').fill(table);
+    await form.getByLabel('Dhuhr (Öğle)').fill('15');
+    await form.getByRole('button', { name: 'Controleren en concept maken' }).click();
+    await expect(page.getByTestId('flash-ok')).toContainText('Tabel ingelezen als concept');
+    await expect(page.getByTestId('validation')).toContainText('kan gepubliceerd worden');
+    await expect(page.getByTestId('diff-summary')).toContainText('2 nieuw');
+    await expect(page.getByLabel(`${d1} Dhuhr iqama`)).toHaveValue('13:42');
+    await page.getByLabel('Ik heb de tijden gecontroleerd met de officiële bron.').check();
+    await page.getByRole('button', { name: 'Publiceren' }).click();
+    await expect(page.getByTestId('version-status')).toHaveText('Gepubliceerd');
+
+    await page.goto(`/m/demo-moskee-zuid?datum=${d1}`);
+    await expect(page.locator('tr[data-prayer="fajr"] td.t')).toHaveText('06:12');
+    await expect(page.locator('tr[data-prayer="dhuhr"] td.iq')).toHaveText('13:42');
+    await expect(page.getByTestId('source-info')).toContainText('Diyanet');
+  });
+
+  test('wachtwoord wijzigen logt uit en het nieuwe wachtwoord werkt', async ({ page }) => {
+    await loginAs(page, 'beheer-b@demo.invalid');
+    await page.getByRole('link', { name: 'Wachtwoord' }).click();
+    await page.getByLabel('Huidig wachtwoord').fill(PW);
+    await page.getByLabel('Nieuw wachtwoord', { exact: true }).fill('nieuw-e2e-wachtwoord-456');
+    await page.getByLabel('Nieuw wachtwoord herhalen').fill('nieuw-e2e-wachtwoord-456');
+    await page.getByRole('button', { name: 'Wachtwoord wijzigen' }).click();
+    await expect(page.getByTestId('flash-ok')).toContainText('Wachtwoord gewijzigd');
+    await page.getByLabel('E-mailadres').fill('beheer-b@demo.invalid');
+    await page.getByLabel('Wachtwoord').fill('nieuw-e2e-wachtwoord-456');
+    await page.getByRole('button', { name: 'Inloggen' }).click();
+    await expect(page.getByRole('heading', { name: 'Mijn moskeeën' })).toBeVisible();
+  });
 });

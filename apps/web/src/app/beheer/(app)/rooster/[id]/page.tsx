@@ -20,7 +20,7 @@ export default async function VersionPage({ params, searchParams }: { params: Pr
     if (err instanceof NotFoundError) notFound();
     throw err;
   }
-  const { version: v, mosque, days, validation, canEdit, canPublish } = data;
+  const { version: v, mosque, days, validation, diff, canEdit, canPublish } = data;
   const readOnly = !canEdit;
 
   return (
@@ -51,6 +51,13 @@ export default async function VersionPage({ params, searchParams }: { params: Pr
           </>
         )}
       </section>
+
+      {diff && (
+        <section className="banner warn" data-testid="diff-summary">
+          <strong>Vergeleken met wat bezoekers nu zien:</strong> {Object.keys(diff.changed).length} dag(en) gewijzigd, {diff.unchangedCount} ongewijzigd,{' '}
+          {diff.newDates.length} nieuw (nog geen gepubliceerd rooster). Gewijzigde dagen staan hieronder met oud → nieuw.
+        </section>
+      )}
 
       <form action={saveDraftAction}>
         <input type="hidden" name="id" value={v.id} />
@@ -138,6 +145,13 @@ export default async function VersionPage({ params, searchParams }: { params: Pr
                       ];
                     })}
                   </tr>,
+                  diff?.changed[d.date] && (
+                    <tr key={`${d.date}-diff`}>
+                      <td colSpan={14} className="small" data-testid={`diff-${d.date}`}>
+                        Gewijzigd: {diff.changed[d.date]!.map((c) => `${describeField(c.field)} ${c.before} → ${c.after}`).join(' · ')}
+                      </td>
+                    </tr>
+                  ),
                   issues.length > 0 && (
                     <tr key={`${d.date}-issues`} className={hasError ? 'has-error' : ''}>
                       <td colSpan={14} className="small" data-testid={`issues-${d.date}`}>

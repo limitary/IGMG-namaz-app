@@ -65,3 +65,16 @@ Alle getoonde moskeeën en tijden zijn fictieve demodata.
 - Geen MFA, geen gebruikersbeheer in de interface (accounts nu via seed/database), geen wachtwoord-reset.
 - Diyanet-koppeling niet getest tegen de echte API; `Weekly`/`Monthly`-endpoints en veldnamen moeten met een echt account bevestigd worden.
 - De "aangemaakt"-datum in beheer is in UTC weergegeven.
+
+## Aanvulling 14 oktober 2026: tabelimport, pilot en wachtwoord
+
+| Controle | Commando | Resultaat |
+| --- | --- | --- |
+| Rekenmodule (29 tests, incl. iqama-minuten) | `npm test -w @mescid/domain` | geslaagd: 29/29 |
+| Integratie + tabelimport + verschil + wachtwoord (58 tests) | `npm test -w @mescid/web` | geslaagd: 58/58 |
+| Browsertests (23, incl. tabel plakken → publiceren, wachtwoord wijzigen) | `npm run test:e2e` | geslaagd: 23/23 |
+| Pilot-opzetscript tweemaal draaien (geen dubbele gegevens) | `npm run pilot:setup` | geslaagd |
+| Plakken van een echte Diyanet-tabel | — | niet uitgevoerd: Diyanet-website niet bereikbaar vanuit deze omgeving |
+
+Gevonden en opgelost tijdens het testen: twee formulieren op de moskeepagina gebruikten dezelfde veld-ID's,
+waardoor een label naar het verkeerde veld wees (ook slecht voor schermlezers).

@@ -110,6 +110,53 @@ export function validateDays(days: { date: string; times: DayTimes }[], tz: stri
   return { publishable: errorCount === 0 && days.length > 0, dayIssues, missing: cov.missing, duplicates: cov.duplicates, errorCount, warningCount };
 }
 
+// ---------- Vergelijken ----------
+
+export interface FieldChange {
+  field: string;
+  before: string;
+  after: string;
+}
+
+export interface VersionDiff {
+  /** Datums die nu nog geen gepubliceerd rooster hebben. */
+  newDates: string[];
+  /** Per datum de gewijzigde velden. */
+  changed: Record<string, FieldChange[]>;
+  unchangedCount: number;
+}
+
+function fmtRef(r: { time: string; dayOffset: number } | null | undefined): string {
+  if (!r || !r.time) return '—';
+  return r.dayOffset === 1 ? `${r.time} (+1)` : r.time;
+}
+
+export function diffWithPublished(draft: { date: string; times: DayTimes }[], published: { date: string; times: DayTimes }[]): VersionDiff {
+  const pub = new Map(published.map((p) => [p.date, p.times]));
+  const out: VersionDiff = { newDates: [], changed: {}, unchangedCount: 0 };
+  for (const d of draft) {
+    const before = pub.get(d.date);
+    if (!before) {
+      out.newDates.push(d.date);
+      continue;
+    }
+    const changes: FieldChange[] = [];
+    const cmp = (field: string, a: Parameters<typeof fmtRef>[0], b: Parameters<typeof fmtRef>[0]) => {
+      const x = fmtRef(a);
+      const y = fmtRef(b);
+      if (x !== y) changes.push({ field, before: x, after: y });
+    };
+    cmp('imsak', before.imsak, d.times.imsak);
+    for (const k of DAY_EVENTS) {
+      cmp(`${k}.adhan`, before.entries[k]?.adhan, d.times.entries[k]?.adhan);
+      cmp(`${k}.iqama`, before.entries[k]?.iqama, d.times.entries[k]?.iqama);
+    }
+    if (changes.length) out.changed[d.date] = changes;
+    else out.unchangedCount++;
+  }
+  return out;
+}
+
 // ---------- Beheer ----------
 
 async function loadVersionForActor(actor: Actor, versionId: string): Promise<{ v: ScheduleVersion; mosque: AdminMosque }> {
@@ -126,11 +173,14 @@ export async function getVersionWithDays(actor: Actor, versionId: string) {
   const { v, mosque } = await loadVersionForActor(actor, versionId);
   const days = await query<{ date: string; times: DayTimes }>('SELECT date, times FROM prayer_days WHERE version_id = $1 ORDER BY date', [v.id]);
   const validation = validateDays(days, mosque.timezone, v.fromDate, v.toDate);
+  // Vergelijking met wat bezoekers nu zien, zodat een beheerder vóór publicatie ziet wat er verandert.
+  const diff = v.status === 'draft' ? diffWithPublished(days, await getPublishedDays(v.mosqueId, v.fromDate, v.toDate)) : null;
   return {
     version: v,
     mosque,
     days,
     validation,
+    diff,
     canEdit: v.status === 'draft' && canOnMosque(actor, 'schedule.edit', mosque),
     canPublish: v.status === 'draft' && canOnMosque(actor, 'schedule.publish', mosque),
   };
@@ -200,6 +250,18 @@ export async function createImportedDraft(
   }
   await audit(db, { actorUserId: args.actorUserId, action: `schedule.import.${args.kind}`, entityType: 'schedule_version', entityId: id, organizationId: mosque.rows[0].organization_id, mosqueId: args.mosqueId, details: { reference: args.reference, days: args.days.length } });
   return id;
+}
+
+/** Beheerinterface: maakt een concept uit een geplakte of geüploade tabel. Publiceert nooit. */
+export async function createDraftFromTable(
+  actor: Actor,
+  mosqueId: string,
+  args: { label: string; reference: string; days: { date: string; times: DayTimes }[]; note: string },
+): Promise<string> {
+  const mosque = await getAdminMosque(actor, mosqueId, 'admin.view');
+  if (!canOnMosque(actor, 'schedule.edit', mosque)) throw new ForbiddenError();
+  if (args.days.length > 400) throw new Error('Te veel dagen in één import (maximaal 400).');
+  return tx((db) => createImportedDraft(db, { mosqueId, kind: 'csv', label: args.label, reference: args.reference, days: args.days, actorUserId: actor.user.id, note: args.note }));
 }
 
 export async function saveDraftDays(actor: Actor, versionId: string, expectedVersion: number, days: { date: string; times: DayTimes }[]): Promise<void> {

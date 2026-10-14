@@ -9,6 +9,10 @@ export const ERRORS: Record<string, string> = {
   periode: 'Kies een geldige periode van maximaal 62 dagen en vul een bronomschrijving in.',
   'rooster-fouten': 'Publiceren geweigerd: het rooster bevat nog fouten of ontbrekende dagen.',
   bevestig: 'Vink eerst aan dat je de tijden hebt gecontroleerd.',
+  'pw-wrong-current': 'Je huidige wachtwoord klopt niet.',
+  'pw-too-short': 'Het nieuwe wachtwoord moet minstens 12 tekens hebben.',
+  'pw-mismatch': 'De twee nieuwe wachtwoorden zijn niet gelijk.',
+  'pw-same': 'Kies een ander wachtwoord dan je huidige.',
 };
 
 export const OKS: Record<string, string> = {
@@ -16,6 +20,8 @@ export const OKS: Record<string, string> = {
   opgeslagen: 'Opgeslagen.',
   gepubliceerd: 'Gepubliceerd. Bezoekers zien nu deze tijden.',
   verworpen: 'Concept verworpen.',
+  'pw-gewijzigd': 'Wachtwoord gewijzigd. Log opnieuw in met je nieuwe wachtwoord.',
+  geimporteerd: 'Tabel ingelezen als concept. Controleer de tijden en de verschillen hieronder en publiceer daarna.',
 };
 
 export const FIELD_LABELS: Record<string, string> = {

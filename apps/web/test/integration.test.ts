@@ -316,3 +316,26 @@ describe('import als concept', () => {
     expect(await getPublishedDays(mosqueB, '2027-09-01', '2027-09-01')).toEqual([]);
   });
 });
+
+describe('tabelimport en wachtwoord', () => {
+  test('tabelimport kan niet voor een moskee van een andere organisatie', async () => {
+    const { createDraftFromTable } = await import('../src/server/schedules');
+    await expect(createDraftFromTable(adminB, mosqueA1, { label: 'x', reference: '', note: '', days: [{ date: '2027-10-01', times: validTimes() }] })).rejects.toBeInstanceOf(NotFoundError);
+    await expect(createDraftFromTable(publisherA1, mosqueA1, { label: 'x', reference: '', note: '', days: [{ date: '2027-10-01', times: validTimes() }] })).rejects.toBeInstanceOf(ForbiddenError);
+    const id = await createDraftFromTable(editorA1, mosqueA1, { label: 'Diyanet', reference: '', note: '', days: [{ date: '2027-10-01', times: validTimes() }] });
+    expect((await getVersionWithDays(editorA1, id)).version.status).toBe('draft');
+  });
+
+  test('wachtwoord wijzigen beëindigt sessies en vereist het huidige wachtwoord', async () => {
+    const { changePassword } = await import('../src/server/auth/session');
+    const u = await makeActor([], 'pw@test.invalid');
+    const s = await login(getPool(), 'pw@test.invalid', PASSWORD);
+    expect(s.ok).toBe(true);
+    expect(await changePassword(getPool(), u.user.id, 'fout-wachtwoord-1', 'nieuw-wachtwoord-123', 'nieuw-wachtwoord-123')).toEqual({ ok: false, reason: 'wrong-current' });
+    expect(await changePassword(getPool(), u.user.id, PASSWORD, 'kort', 'kort')).toEqual({ ok: false, reason: 'too-short' });
+    expect(await changePassword(getPool(), u.user.id, PASSWORD, 'nieuw-wachtwoord-123', 'anders-wachtwoord-123')).toEqual({ ok: false, reason: 'mismatch' });
+    expect(await changePassword(getPool(), u.user.id, PASSWORD, 'nieuw-wachtwoord-123', 'nieuw-wachtwoord-123')).toEqual({ ok: true });
+    if (s.ok) expect(await userForToken(getPool(), s.token)).toBeNull();
+    expect((await login(getPool(), 'pw@test.invalid', 'nieuw-wachtwoord-123')).ok).toBe(true);
+  });
+});

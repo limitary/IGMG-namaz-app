@@ -3,7 +3,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getPool } from '@/server/db';
-import { login, logout, SESSION_COOKIE } from '@/server/auth/session';
+import { changePassword, login, logout, SESSION_COOKIE } from '@/server/auth/session';
 import { requireActor } from '@/server/auth/current';
 import { ForbiddenError, NotFoundError } from '@/server/authz';
 import { ConflictError, createMosque, mosqueInputSchema, updateMosque } from '@/server/mosques';
@@ -157,4 +157,12 @@ export async function discardAction(fd: FormData) {
     failTo(path, err);
   }
   redirect(`${path}?ok=verworpen`);
+}
+
+export async function changePasswordAction(fd: FormData) {
+  const actor = await requireActor();
+  const r = await changePassword(getPool(), actor.user.id, str(fd, 'current'), str(fd, 'next'), str(fd, 'confirm'));
+  if (!r.ok) redirect(`/beheer/wachtwoord?fout=pw-${r.reason}`);
+  (await cookies()).delete(SESSION_COOKIE);
+  redirect('/beheer/inloggen?ok=pw-gewijzigd');
 }

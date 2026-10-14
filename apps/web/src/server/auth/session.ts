@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { Db } from '../db';
 import { audit } from '../audit';
-import { dummyHash, verifyPassword } from './password';
+import { dummyHash, hashPassword, verifyPassword } from './password';
 
 export const SESSION_COOKIE = 'mescid_session';
 export const SESSION_TTL_HOURS = 12;
@@ -60,4 +60,20 @@ export async function userForToken(db: Db, token: string | undefined | null): Pr
 export async function logout(db: Db, token: string | undefined | null): Promise<void> {
   if (!token) return;
   await db.query('DELETE FROM sessions WHERE token_hash = $1', [hashToken(token)]);
+}
+
+export type ChangePasswordResult = { ok: true } | { ok: false; reason: 'wrong-current' | 'too-short' | 'mismatch' | 'same' };
+
+/** Wijzigt het wachtwoord en beëindigt alle sessies van deze gebruiker (ook op andere apparaten). */
+export async function changePassword(db: Db, userId: string, current: string, next: string, confirm: string): Promise<ChangePasswordResult> {
+  if (next !== confirm) return { ok: false, reason: 'mismatch' };
+  if (next.length < 12 || next.length > 200) return { ok: false, reason: 'too-short' };
+  if (next === current) return { ok: false, reason: 'same' };
+  const { rows } = await db.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+  const stored = (rows[0] as { password_hash: string } | undefined)?.password_hash;
+  if (!stored || !(await verifyPassword(stored, current))) return { ok: false, reason: 'wrong-current' };
+  await db.query('UPDATE users SET password_hash = $2 WHERE id = $1', [userId, await hashPassword(next)]);
+  await db.query('DELETE FROM sessions WHERE user_id = $1', [userId]);
+  await audit(db, { actorUserId: userId, action: 'auth.password_change', entityType: 'user', entityId: userId });
+  return { ok: true };
 }

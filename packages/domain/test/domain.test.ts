@@ -225,3 +225,13 @@ describe('roosterdekking', () => {
     expect(r.invalid).toEqual(['2028-02-30']);
   });
 });
+
+describe('minuten optellen (iqama-regel)', () => {
+  test('binnen de dag en over middernacht', async () => {
+    const { addMinutes } = await import('../src');
+    expect(addMinutes('13:35', 15)).toEqual({ time: '13:50', dayOffset: 0 });
+    expect(addMinutes('23:50', 15)).toEqual({ time: '00:05', dayOffset: 1 });
+    expect(() => addMinutes('25:00', 5)).toThrow();
+    expect(() => addMinutes('10:00', -5)).toThrow();
+  });
+});

@@ -12,6 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <nav className="row" aria-label="Beheermenu">
           <Link href="/beheer">Overzicht</Link>
           <Link href="/beheer/audit">Auditlog</Link>
+          <Link href="/beheer/wachtwoord">Wachtwoord</Link>
         </nav>
         <form action={logoutAction} className="row">
           <span className="small muted" data-testid="current-user">

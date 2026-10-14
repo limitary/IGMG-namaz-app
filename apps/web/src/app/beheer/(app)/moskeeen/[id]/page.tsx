@@ -8,6 +8,7 @@ import { listVersions, MAX_DRAFT_DAYS } from '@/server/schedules';
 import { Flash } from '@/components/Flash';
 import { createDraftAction, updateMosqueAction } from '../../../actions';
 import { MosqueFields } from '../../MosqueFields';
+import { ImportForm } from '@/components/ImportForm';
 
 const STATUS_NL = { draft: 'Concept', published: 'Gepubliceerd', superseded: 'Vervangen', discarded: 'Verworpen' } as const;
 
@@ -62,6 +63,8 @@ export default async function AdminMosquePage({ params, searchParams }: { params
               ))}
             </ul>
           )}
+
+          {canEditSchedule && <ImportForm mosqueId={mosque.id} defaultLabel={`Diyanet İşleri Başkanlığı (namazvakitleri.diyanet.gov.tr) – ${mosque.city}`} />}
 
           {canEditSchedule && (
             <form action={createDraftAction} className="card" data-testid="new-draft">
